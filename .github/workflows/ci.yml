@@ -61,7 +61,7 @@ jobs:
       contents: read
     strategy:
       matrix:
-        distro: [goose-akash, goose-vercel]
+        distro: [goose-akash, goose-vercel, goose-picollm, goose-mii, goose-mnn, goose-ryzenai, goose-exllamav3, goose-envminds]
     steps:
       - uses: actions/checkout@v4
 
@@ -233,6 +233,78 @@ jobs:
           file: ./distros/goose-vercel/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/goose-vercel:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-picollm distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-picollm/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-picollm:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-mii distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-mii/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-mii:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-mnn distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-mnn/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-mnn:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-ryzenai distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-ryzenai/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-ryzenai:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-exllamav3 distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-exllamav3/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-exllamav3:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-envminds distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-envminds/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-envminds:latest
           build-args: |
             BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha

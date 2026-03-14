@@ -7,7 +7,7 @@
 #   - Goose system prompt tuned for full-stack web/mobile engineering
 #
 # Build:
-#   docker build -t goose-vercel .
+#   docker build -t goose-vercel -f distros/goose-vercel/Dockerfile .
 #
 # Extra environment variables:
 #   VERCEL_TOKEN      — Vercel deploy token (required for deploys)
@@ -55,7 +55,7 @@ RUN npm install -g expo-cli@latest eas-cli@latest
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
-COPY --chown=coder:coder system-prompt.md /opt/goose/system-prompt.md
+COPY --chown=coder:coder distros/goose-vercel/system-prompt.md /opt/goose/system-prompt.md
 
 # ---------------------------------------------------------------------------
 # Goose config override

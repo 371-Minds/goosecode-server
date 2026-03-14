@@ -24,7 +24,7 @@ A containerized VS Code server environment with integrated [Goose AI coding agen
 - **Secure Environment**: Password-protected VS Code Server instance
 - **Git Integration**: Git pre-installed and ready for repository operations
 - **Persistent Configuration**: Environment variables and configuration preserved between sessions (Unless workspace is deleted)
-- **Custom Distros**: `goose-akash` and `goose-vercel` pre-packed with the exact CLIs and system prompts needed
+- **Custom Distros**: Deployment- and runtime-specific `goose-*` images for Akash, Vercel, picoLLM, MII, MNN, RyzenAI, exllamav3, and envminds
 - **Biological Data Stack**: ClickHouse, Redis, ChromaDB, Ceramic — one `docker compose up` away
 - **Automaton Orchestration**: Integrates with [371-Minds/automaton](https://github.com/371-Minds/automaton) for automated CI/CD pipelines
 - **Universal Frontend Edge**: Build once for Web (Next.js + Vercel), iOS, and Android (Expo EAS)
@@ -105,7 +105,8 @@ docker build -t goosecode-server:latest .
 # Build distro
 docker build -t goose-akash \
   --build-arg BASE_IMAGE=goosecode-server:latest \
-  distros/goose-akash/
+  -f distros/goose-akash/Dockerfile \
+  .
 ```
 
 Extra environment variables:
@@ -122,7 +123,8 @@ Adds Node.js LTS, pnpm, Vercel CLI, Expo CLI, and EAS CLI.  System prompt is tun
 ```bash
 docker build -t goose-vercel \
   --build-arg BASE_IMAGE=goosecode-server:latest \
-  distros/goose-vercel/
+  -f distros/goose-vercel/Dockerfile \
+  .
 ```
 
 Extra environment variables:
@@ -133,6 +135,34 @@ Extra environment variables:
 | `EAS_PROJECT_ID` | Expo project ID |
 | `NEXT_APP_DIR` | Next.js app path in workspace (default: `web`) |
 | `EXPO_APP_DIR` | Expo app path in workspace (default: `mobile`) |
+
+### AI runtime distros
+
+These distros extend the base Goosecode Server image with shallow checkouts of the requested
+runtime projects under `/opt/integrations`, plus system prompts tuned for each workflow.
+
+| Distro | Integrated project | Runtime checkout path |
+|--------|--------------------|-----------------------|
+| `goose-picollm` | [Picovoice/picollm](https://github.com/Picovoice/picollm) | `/opt/integrations/picollm` |
+| `goose-mii` | [deepspeedai/DeepSpeed-MII](https://github.com/deepspeedai/DeepSpeed-MII) | `/opt/integrations/mii` |
+| `goose-mnn` | [alibaba/MNN](https://github.com/alibaba/MNN) | `/opt/integrations/mnn` |
+| `goose-ryzenai` | [k-rks/RyzenAI-SW](https://github.com/k-rks/RyzenAI-SW) | `/opt/integrations/ryzenai` |
+| `goose-exllamav3` | [turboderp-org/exllamav3](https://github.com/turboderp-org/exllamav3) | `/opt/integrations/exllamav3` |
+| `goose-envminds` | [371-Minds/envminds](https://github.com/371-Minds/envminds) | `/opt/integrations/envminds` |
+
+Example build commands:
+
+```bash
+docker build -t goose-picollm \
+  --build-arg BASE_IMAGE=goosecode-server:latest \
+  -f distros/goose-picollm/Dockerfile \
+  .
+
+docker build -t goose-mii \
+  --build-arg BASE_IMAGE=goosecode-server:latest \
+  -f distros/goose-mii/Dockerfile \
+  .
+```
 
 ## Biological Data Stack
 

@@ -122,7 +122,7 @@ Adds on top of the base image:
 - Pre-loaded SDL templates at `/opt/akash/sdls/`
 - System prompt focused on decentralized cloud engineering
 
-Build: `docker build -t goose-akash distros/goose-akash/`
+Build: `docker build -t goose-akash -f distros/goose-akash/Dockerfile .`
 
 ### goose-vercel
 `distros/goose-vercel/`
@@ -133,7 +133,21 @@ Adds on top of the base image:
 - Next.js scaffolding helpers
 - System prompt focused on full-stack web + mobile
 
-Build: `docker build -t goose-vercel distros/goose-vercel/`
+Build: `docker build -t goose-vercel -f distros/goose-vercel/Dockerfile .`
+
+### AI runtime distros
+
+The following distros extend the base image with shallow runtime checkouts under
+`/opt/integrations/` and workflow-specific system prompts:
+
+- `goose-picollm` → `Picovoice/picollm`
+- `goose-mii` → `deepspeedai/DeepSpeed-MII`
+- `goose-mnn` → `alibaba/MNN`
+- `goose-ryzenai` → `k-rks/RyzenAI-SW`
+- `goose-exllamav3` → `turboderp-org/exllamav3`
+- `goose-envminds` → `371-Minds/envminds`
+
+Build example: `docker build -t goose-picollm -f distros/goose-picollm/Dockerfile .`
 
 ---
 
@@ -264,6 +278,24 @@ goosecode-server/
 │   ├── goose-akash/
 │   │   ├── Dockerfile          # Akash-specific image
 │   │   └── system-prompt.md    # Akash engineering system prompt
+│   ├── goose-envminds/
+│   │   ├── Dockerfile          # envminds integration image
+│   │   └── system-prompt.md    # envminds workflow system prompt
+│   ├── goose-exllamav3/
+│   │   ├── Dockerfile          # exllamav3 integration image
+│   │   └── system-prompt.md    # exllamav3 workflow system prompt
+│   ├── goose-mii/
+│   │   ├── Dockerfile          # DeepSpeed-MII integration image
+│   │   └── system-prompt.md    # MII workflow system prompt
+│   ├── goose-mnn/
+│   │   ├── Dockerfile          # MNN integration image
+│   │   └── system-prompt.md    # MNN workflow system prompt
+│   ├── goose-picollm/
+│   │   ├── Dockerfile          # picoLLM integration image
+│   │   └── system-prompt.md    # picoLLM workflow system prompt
+│   ├── goose-ryzenai/
+│   │   ├── Dockerfile          # RyzenAI-SW integration image
+│   │   └── system-prompt.md    # RyzenAI workflow system prompt
 │   └── goose-vercel/
 │       ├── Dockerfile          # Vercel/Expo-specific image
 │       └── system-prompt.md    # Full-stack system prompt
