@@ -1,0 +1,68 @@
+# ClickHouse SDL — Titan (long-term / analytics memory)
+#
+# Deploy:
+#   akash tx deployment create clickhouse.yaml --from $AKASH_KEY_NAME
+#
+# Provides:
+#   - ClickHouse HTTP API on port 8123
+#   - ClickHouse native TCP on port 9000
+#
+# Connect from Goose agents:
+#   CLICKHOUSE_URL=http://<provider-host>:8123
+
+---
+version: "2.0"
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    env:
+      - CLICKHOUSE_USER=goose
+      - CLICKHOUSE_PASSWORD=goosepass
+      - CLICKHOUSE_DB=agent_logs
+    expose:
+      - port: 8123
+        as: 8123
+        to:
+          - global: true
+      - port: 9000
+        as: 9000
+        to:
+          - global: false
+    params:
+      storage:
+        data:
+          mount: /var/lib/clickhouse
+          readOnly: false
+
+profiles:
+  compute:
+    clickhouse:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 2Gi
+        storage:
+          - name: data
+            size: 50Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    goose-swarm:
+      attributes:
+        region: us-east
+      signedBy:
+        anyOf:
+          - akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63
+      pricing:
+        clickhouse:
+          denom: uakt
+          amount: 1000
+
+deployment:
+  clickhouse:
+    goose-swarm:
+      profile: clickhouse
+      count: 1

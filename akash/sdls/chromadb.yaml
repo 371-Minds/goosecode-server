@@ -1,0 +1,65 @@
+# ChromaDB SDL — Vector Instincts (embedding / semantic search memory)
+#
+# Deploy:
+#   akash tx deployment create chromadb.yaml --from $AKASH_KEY_NAME
+#
+# Provides:
+#   - ChromaDB REST API on port 8001
+#
+# Connect from Goose agents:
+#   CHROMADB_URL=http://<provider-host>:8001
+
+---
+version: "2.0"
+
+services:
+  chromadb:
+    image: chromadb/chroma:0.5.3
+    env:
+      - CHROMA_SERVER_AUTH_CREDENTIALS=goosepass
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/data
+    expose:
+      - port: 8000
+        as: 8001
+        to:
+          - global: true
+    params:
+      storage:
+        data:
+          mount: /chroma/data
+          readOnly: false
+
+profiles:
+  compute:
+    chromadb:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 1Gi
+        storage:
+          - name: data
+            size: 20Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    goose-swarm:
+      attributes:
+        region: us-east
+      signedBy:
+        anyOf:
+          - akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63
+      pricing:
+        chromadb:
+          denom: uakt
+          amount: 400
+
+deployment:
+  chromadb:
+    goose-swarm:
+      profile: chromadb
+      count: 1
