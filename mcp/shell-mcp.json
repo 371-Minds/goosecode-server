@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "shell": {
+      "command": "npx",
+      "args": ["-y", "@supercorp-ai/shell-mcp"],
+      "env": {
+        "ALLOWED_COMMANDS": "bash,sh,python3,node,git,goose,akash,vercel,eas,expo,pnpm,npm,sqlite3,curl,jq",
+        "WORKING_DIR": "/workspace",
+        "SANDBOX_MODE": "true"
+      }
+    }
+  },
+  "description": "shell-mcp provides sandboxed shell execution for Goose agents. Commands run inside the microVM — destructive operations only affect the disposable container, not the host.",
+  "tools": {
+    "shell_execute": {
+      "description": "Run a single bash command inside the sandbox workspace",
+      "sandboxed": true
+    },
+    "shell_exec_background": {
+      "description": "Run a command in the background; returns PID",
+      "sandboxed": true
+    },
+    "shell_read_file": {
+      "description": "Read a file from the workspace",
+      "sandboxed": true
+    },
+    "shell_write_file": {
+      "description": "Write content to a workspace file",
+      "sandboxed": true
+    },
+    "shell_list_dir": {
+      "description": "List directory contents",
+      "sandboxed": true
+    }
+  },
+  "security": {
+    "note": "All commands execute inside an isolated microVM. If an agent runs rm -rf /, it only destroys the ephemeral container — the host machine and persistent volumes are unaffected.",
+    "allowedPaths": ["/workspace", "/tmp"],
+    "blockedCommands": ["sudo", "su", "passwd", "chown", "chmod"]
+  }
+}

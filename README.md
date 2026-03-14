@@ -1,6 +1,6 @@
-# Goosecode Server
+# Goosecode Server — Heavy-Lifting Engineering Swarm
 
-A containerized VS Code server environment with integrated [Goose AI coding agent](https://github.com/block/goose). This project provides a ready-to-use Docker setup that combines VS Code Server with the Goose AI agent, allowing you to access a powerful coding environment through your browser.
+A containerized VS Code server environment with integrated [Goose AI coding agent](https://github.com/block/goose), purpose-built as the **heavy-lifting engineering swarm** for solo-developer and multi-agent teams.  Goose handles the actual file editing, terminal commands, and debugging for your Expo/Next.js apps — all executing safely inside an isolated microVM so that a destructive hallucination only destroys a disposable container, not your host machine.
 
 <div align="center">
   <img src="./static/img/logo.png" alt="Goose AI + VS Code Server" width="400">
@@ -10,6 +10,7 @@ A containerized VS Code server environment with integrated [Goose AI coding agen
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
 [![VS Code](https://img.shields.io/badge/VS_Code-Server-007ACC?logo=visualstudiocode)](https://code.visualstudio.com/)
 [![OpenAI](https://img.shields.io/badge/Powered_by-OpenAI-412991?logo=openai)](https://openai.com)
+[![CI](https://github.com/371-Minds/goosecode-server/actions/workflows/ci.yml/badge.svg)](https://github.com/371-Minds/goosecode-server/actions/workflows/ci.yml)
 
 ## Features
 
@@ -19,39 +20,184 @@ A containerized VS Code server environment with integrated [Goose AI coding agen
 - **Goose Terminal API**: REST API for sending commands to the terminal and retrieving session logs
 - **Streaming Conversations**: Real-time streaming of Goose AI conversations using Server-Sent Events (SSE)
 - **Material Design**: Dark theme with Material icons for a beautiful coding experience
+- **Secure MicroVM Sandbox**: [shell-mcp](https://github.com/supercorp-ai/shell-mcp) provides sandboxed shell execution — destructive commands only affect the disposable container
 - **Secure Environment**: Password-protected VS Code Server instance
 - **Git Integration**: Git pre-installed and ready for repository operations
 - **Persistent Configuration**: Environment variables and configuration preserved between sessions (Unless workspace is deleted)
+- **Custom Distros**: `goose-akash` and `goose-vercel` pre-packed with the exact CLIs and system prompts needed
+- **Biological Data Stack**: ClickHouse, Redis, ChromaDB, Ceramic — one `docker compose up` away
+- **Automaton Orchestration**: Integrates with [371-Minds/automaton](https://github.com/371-Minds/automaton) for automated CI/CD pipelines
+- **Universal Frontend Edge**: Build once for Web (Next.js + Vercel), iOS, and Android (Expo EAS)
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Goosecode Swarm Platform                     │
+│                                                                 │
+│  ┌────────────┐   orchestrates   ┌──────────────────────────┐  │
+│  │ Automaton  │ ───────────────► │  Goose Engineering Swarm │  │
+│  │ (CTO node) │                  │  (parallel sub-agents)   │  │
+│  └────────────┘                  └──────────┬───────────────┘  │
+│                                             │ runs inside       │
+│  ┌──────────────────────────────────────────▼───────────────┐  │
+│  │              Agent Sandbox (microVM / container)          │  │
+│  │  shell-mcp ──► bash ──► workspace files                  │  │
+│  │  goose-api ──► tmux ──► VS Code Server (:8080)           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Data / Memory Layer (Biological Stack)                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐  │
+│  │ClickHouse│ │  Redis   │ │ ChromaDB │ │     Ceramic      │  │
+│  │ (Titan)  │ │ (Nerves) │ │(Instincts│ │  (Audit trail)   │  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
-1. **Clone this repository**
+### Option A — Full swarm stack (recommended)
+
+Starts VS Code + Goose AI + all Biological Stack databases with a single command.
+
+1. **Clone and configure**
    ```bash
-   git clone https://github.com/PlatOps-AI/goosecode-server.git
+   git clone https://github.com/371-Minds/goosecode-server.git
    cd goosecode-server
-   ```
-
-2. **Create or edit `.env` file with your OpenAI API key**
-   ```bash
    cp .env.example .env
-   # Edit .env with your API key
-   ```
-   
-3. **Run the container**
-   ```bash
-   chmod +x run.sh
-   ./run.sh
+   # Edit .env — at minimum set OPENAI_API_KEY
    ```
 
-4. **Access Goosecode Server**
-   - Open your browser and navigate to: http://localhost:8080
-   - Default password: `talktomegoose` (can be changed in .env)
-   - A shared terminal with Goose will start automatically
+2. **Start the full stack**
+   ```bash
+   docker compose up
+   ```
+
+3. **Access**
+   - VS Code Server: http://localhost:8080 (password from `.env`, default: `talktomegoose`)
+   - Goose API + Swagger: http://localhost:8000/docs
+
+### Option B — Goose only (lightweight)
+
+```bash
+cp .env.example .env
+chmod +x run.sh
+./run.sh
+```
 
 <div align="center">
   <img src="./static/img/screenshot.png" alt="VS Code Server Screenshot" width="600">
   <p><i>Example of the VS Code interface in browser</i></p>
 </div>
+
+## Custom Distros
+
+Build a Goose distribution pre-packed with the exact CLIs and system prompts for your target platform.
+
+### goose-akash — Akash Network deployments
+
+Adds the Akash CLI, IPFS CLI, SQLite, and pre-loaded SDL templates.  System prompt is tuned for decentralised cloud engineering.
+
+```bash
+# Build base first
+docker build -t goosecode-server:latest .
+
+# Build distro
+docker build -t goose-akash \
+  --build-arg BASE_IMAGE=goosecode-server:latest \
+  distros/goose-akash/
+```
+
+Extra environment variables:
+| Variable | Description |
+|----------|-------------|
+| `AKASH_KEY_NAME` | Wallet key name |
+| `AKASH_NODE` | Akash RPC endpoint |
+| `AKASH_CHAIN_ID` | Chain ID (default: `akashnet-2`) |
+
+### goose-vercel — Vercel Edge + Expo deployments
+
+Adds Node.js LTS, pnpm, Vercel CLI, Expo CLI, and EAS CLI.  System prompt is tuned for full-stack Web + Mobile engineering.
+
+```bash
+docker build -t goose-vercel \
+  --build-arg BASE_IMAGE=goosecode-server:latest \
+  distros/goose-vercel/
+```
+
+Extra environment variables:
+| Variable | Description |
+|----------|-------------|
+| `VERCEL_TOKEN` | Vercel deploy token |
+| `EXPO_TOKEN` | Expo EAS token |
+| `EAS_PROJECT_ID` | Expo project ID |
+| `NEXT_APP_DIR` | Next.js app path in workspace (default: `web`) |
+| `EXPO_APP_DIR` | Expo app path in workspace (default: `mobile`) |
+
+## Biological Data Stack
+
+Deploy a specialised, multi-tiered data stack that mimics biological memory systems.
+
+| Service | Analogy | Port | Use case |
+|---------|---------|------|---------|
+| **ClickHouse** | Titan (long-term memory) | 8123 | Analytics, event logs, agent traces |
+| **Redis** | Nerves (fast signals) | 6379 | Pub/sub, ephemeral cache, agent comms |
+| **ChromaDB** | Instincts (vector memory) | 8001 | Embeddings, semantic search |
+| **Ceramic** | Audit trail (immutable) | 7007 | Verifiable, decentralised data |
+| **SQLite** | Working memory | (file) | Per-agent relational state |
+
+All services start with `docker compose up`.  Akash SDL deployment templates for each service are in `akash/sdls/`.
+
+```bash
+# Deploy ClickHouse to Akash
+akash tx deployment create akash/sdls/clickhouse.yaml --from $AKASH_KEY_NAME
+```
+
+## Universal Frontend Edge (Expo + Vercel + Automaton)
+
+Build once, deploy everywhere.  Use the `goose-vercel` distro for the full pipeline:
+
+```
+Write once (Expo / Next.js)
+  ├─► Web: Vercel Edge     vercel deploy --prod
+  ├─► iOS:  Expo EAS       eas build --platform ios
+  └─► Android: Expo EAS   eas build --platform android
+```
+
+## Automaton Orchestration
+
+[371-Minds/automaton](https://github.com/371-Minds/automaton) acts as the CTO node, dispatching engineering sub-agents to this swarm via the Goose Terminal API.
+
+```bash
+# Send a task to Goose via the API
+curl -X POST http://localhost:8000/api/stream \
+  -H "X-API-Key: $PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "implement feature X", "session_id": "automaton-task-123"}'
+```
+
+Sub-agents use `GOOSE_SESSION_ID=automaton-task-<TASK_ID>` for parallel execution without session collisions.
+
+See [AGENTS.md](AGENTS.md) for the full agent-to-agent handoff protocol.
+
+## Secure MicroVM Sandbox (shell-mcp)
+
+[shell-mcp](https://github.com/supercorp-ai/shell-mcp) is configured at `mcp/shell-mcp.json` and exposes MCP tools that execute shell commands **inside the sandbox**.  If an agent hallucinates a destructive command (`rm -rf /`), it only destroys the disposable VM — not your host machine.
+
+To connect Goose to shell-mcp, add it to your Goose MCP configuration:
+
+```yaml
+# ~/.config/goose/config.yaml
+extensions:
+  shell:
+    type: stdio
+    cmd: npx
+    args: ["-y", "@supercorp-ai/shell-mcp"]
+    env:
+      ALLOWED_COMMANDS: "bash,sh,python3,node,git"
+      WORKING_DIR: /workspace
+      SANDBOX_MODE: "true"
+```
 
 ## Using the run.sh Script
 

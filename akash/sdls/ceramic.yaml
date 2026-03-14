@@ -1,0 +1,103 @@
+# Ceramic SDL — Immutable Audit Trail (decentralized, verifiable data)
+#
+# Deploy:
+#   akash tx deployment create ceramic.yaml --from $AKASH_KEY_NAME
+#
+# Provides:
+#   - Ceramic node HTTP API on port 7007
+#
+# Connect from Goose agents:
+#   CERAMIC_URL=http://<provider-host>:7007
+#
+# Note: Ceramic requires an IPFS node.  This SDL co-deploys a kubo IPFS node
+# on the same lease.  The two services communicate on the internal network.
+
+---
+version: "2.0"
+
+services:
+  ipfs:
+    image: ipfs/kubo:v0.29.0
+    expose:
+      - port: 5001
+        as: 5001
+        to:
+          - service: ceramic
+      - port: 4001
+        as: 4001
+        to:
+          - global: true
+    params:
+      storage:
+        ipfs-data:
+          mount: /data/ipfs
+          readOnly: false
+
+  ceramic:
+    image: ceramicnetwork/js-ceramic:5.10.0
+    env:
+      - CERAMIC_IPFS_HOST=http://ipfs:5001
+      - CERAMIC_NETWORK=mainnet
+    depends_on:
+      - ipfs
+    expose:
+      - port: 7007
+        as: 7007
+        to:
+          - global: true
+    params:
+      storage:
+        ceramic-data:
+          mount: /root/.ceramic
+          readOnly: false
+
+profiles:
+  compute:
+    ipfs:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - name: ipfs-data
+            size: 30Gi
+            attributes:
+              persistent: true
+              class: beta3
+    ceramic:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 1Gi
+        storage:
+          - name: ceramic-data
+            size: 10Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    goose-swarm:
+      attributes:
+        region: us-east
+      signedBy:
+        anyOf:
+          - akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63
+      pricing:
+        ipfs:
+          denom: uakt
+          amount: 200
+        ceramic:
+          denom: uakt
+          amount: 300
+
+deployment:
+  ipfs:
+    goose-swarm:
+      profile: ipfs
+      count: 1
+  ceramic:
+    goose-swarm:
+      profile: ceramic
+      count: 1

@@ -1,0 +1,65 @@
+# Redis SDL — Nerves (high-speed signals / pub-sub)
+#
+# Deploy:
+#   akash tx deployment create redis.yaml --from $AKASH_KEY_NAME
+#
+# Provides:
+#   - Redis on port 6379
+#
+# Connect from Goose agents:
+#   REDIS_URL=redis://<provider-host>:6379
+
+---
+version: "2.0"
+
+services:
+  redis:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --requirepass
+      - goosepass
+      - --appendonly
+      - "yes"
+    expose:
+      - port: 6379
+        as: 6379
+        to:
+          - global: true
+    params:
+      storage:
+        data:
+          mount: /data
+          readOnly: false
+
+profiles:
+  compute:
+    redis:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - name: data
+            size: 10Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    goose-swarm:
+      attributes:
+        region: us-east
+      signedBy:
+        anyOf:
+          - akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63
+      pricing:
+        redis:
+          denom: uakt
+          amount: 200
+
+deployment:
+  redis:
+    goose-swarm:
+      profile: redis
+      count: 1

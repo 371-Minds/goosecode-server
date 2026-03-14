@@ -1,0 +1,172 @@
+version: "3.9"
+
+# Goosecode Swarm — full local development stack
+#
+# Services:
+#   goosecode  — VS Code Server + Goose AI (port 8080) + REST API (port 8000)
+#   clickhouse — Titan analytics / long-term memory (port 8123)
+#   redis      — Nerves fast cache / pub-sub (port 6379)
+#   chromadb   — Vector instincts / semantic search (port 8001)
+#   ceramic    — Decentralised audit trail (port 7007)
+#   ipfs       — IPFS node supporting Ceramic (port 5001)
+#
+# Usage:
+#   docker compose up          # start all services
+#   docker compose up goosecode # start only VS Code + Goose
+#   docker compose down -v     # stop + remove volumes
+
+services:
+  # ---------------------------------------------------------------------------
+  # Goosecode Server — VS Code + Goose AI
+  # ---------------------------------------------------------------------------
+  goosecode:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: goosecode-server:latest
+    container_name: goosecode
+    ports:
+      - "${PORT:-8080}:8080"
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./workspace:/workspace
+      - ./static:/workspace/static:ro
+      - ./goose-api:/workspace/goose-api
+      - ./mcp:/workspace/mcp:ro
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      PASSWORD: ${PASSWORD:-talktomegoose}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GIT_USER_NAME: ${GIT_USER_NAME:-Goosecode Swarm}
+      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-swarm@goosecode.ai}
+      ENABLE_TERMINAL_SHARING: ${ENABLE_TERMINAL_SHARING:-true}
+      ENABLE_GOOSE_API: ${ENABLE_GOOSE_API:-true}
+      DEFAULT_TERMINAL_MODE: ${DEFAULT_TERMINAL_MODE:-read-write}
+      GOOSE_SESSION_ID: ${GOOSE_SESSION_ID:-}
+      GOOSE_RESUME_SESSION: ${GOOSE_RESUME_SESSION:-false}
+      GOOSE_PROVIDER: ${GOOSE_PROVIDER:-openai}
+      GOOSE_MODEL: ${GOOSE_MODEL:-o3-mini-2025-01-31}
+      # Biological stack connection strings (resolved via Docker internal DNS)
+      CLICKHOUSE_URL: http://clickhouse:8123
+      REDIS_URL: redis://:goosepass@redis:6379
+      CHROMADB_URL: http://chromadb:8001
+      CERAMIC_URL: http://ceramic:7007
+      SQLITE_PATH: /workspace/.db/agent_state.sqlite
+      # Cloud provider tokens (optional, needed for deploy tasks)
+      VERCEL_TOKEN: ${VERCEL_TOKEN:-}
+      EXPO_TOKEN: ${EXPO_TOKEN:-}
+      EAS_PROJECT_ID: ${EAS_PROJECT_ID:-}
+      AKASH_NODE: ${AKASH_NODE:-https://rpc.akashnet.net:443}
+      AKASH_CHAIN_ID: ${AKASH_CHAIN_ID:-akashnet-2}
+      # Automaton orchestration
+      AUTOMATON_URL: ${AUTOMATON_URL:-}
+      AUTOMATON_TASK_ID: ${AUTOMATON_TASK_ID:-}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # ClickHouse — Titan (long-term analytics memory)
+  # ---------------------------------------------------------------------------
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: goose
+      CLICKHOUSE_PASSWORD: goosepass
+      CLICKHOUSE_DB: agent_logs
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — Nerves (high-speed cache / pub-sub / agent comms)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --requirepass goosepass --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "goosepass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # ChromaDB — Vector Instincts (embedding / semantic search)
+  # ---------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:0.5.3
+    container_name: chromadb
+    ports:
+      - "8001:8000"
+    environment:
+      CHROMA_SERVER_AUTH_CREDENTIALS: goosepass
+      CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER: chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      CHROMA_SERVER_AUTH_PROVIDER: chromadb.auth.token.TokenAuthServerProvider
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/data
+    volumes:
+      - chromadb_data:/chroma/data
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # IPFS — kubo node (required by Ceramic)
+  # ---------------------------------------------------------------------------
+  ipfs:
+    image: ipfs/kubo:v0.29.0
+    container_name: ipfs
+    ports:
+      - "5001:5001"
+      - "4001:4001"
+    volumes:
+      - ipfs_data:/data/ipfs
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Ceramic — Decentralised Audit Trail (mutable, verifiable)
+  # ---------------------------------------------------------------------------
+  ceramic:
+    image: ceramicnetwork/js-ceramic:5.10.0
+    container_name: ceramic
+    ports:
+      - "7007:7007"
+    environment:
+      CERAMIC_IPFS_HOST: http://ipfs:5001
+      CERAMIC_NETWORK: mainnet
+    volumes:
+      - ceramic_data:/root/.ceramic
+    depends_on:
+      - ipfs
+    restart: unless-stopped
+
+volumes:
+  clickhouse_data:
+  redis_data:
+  chromadb_data:
+  ipfs_data:
+  ceramic_data:
