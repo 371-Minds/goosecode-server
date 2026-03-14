@@ -36,7 +36,7 @@ ENV PATH="/opt/goose-api-venv/bin:$PATH"
 RUN pip3 install --upgrade pip && pip3 install -r /tmp/requirements.txt
 
 # Install Goose AI agent (simple one-step process)
-RUN curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash \
+RUN curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash \
     && chmod +x /root/.local/bin/goose \
     && mv /root/.local/bin/goose /usr/local/bin/goose
 

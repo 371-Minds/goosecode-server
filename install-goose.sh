@@ -11,7 +11,7 @@ apt-get update && apt-get install -y bzip2 libdbus-1-3
 
 # Download and install Goose
 echo "Downloading and installing Goose..."
-curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash
+curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash
 
 # Move Goose to standard location
 if [ -f "$HOME/.local/bin/goose" ]; then

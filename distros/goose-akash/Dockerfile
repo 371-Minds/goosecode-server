@@ -8,7 +8,7 @@
 #   - Goose system prompt tuned for Akash engineering tasks
 #
 # Build:
-#   docker build -t goose-akash .
+#   docker build -t goose-akash -f distros/goose-akash/Dockerfile .
 #
 # Run (inherits run.sh vars plus the extras below):
 #   AKASH_KEY_NAME=mykey
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------------------------------------------------------------------------
 # Akash CLI
 # ---------------------------------------------------------------------------
-ARG AKASH_VERSION=0.36.0
+ARG AKASH_VERSION=0.10.7
 RUN set -eux; \
     ARCH=$(uname -m); \
     case "$ARCH" in \
@@ -74,7 +74,7 @@ COPY --chown=coder:coder akash/sdls /opt/akash/sdls/
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
-COPY --chown=coder:coder system-prompt.md /opt/goose/system-prompt.md
+COPY --chown=coder:coder distros/goose-akash/system-prompt.md /opt/goose/system-prompt.md
 
 # ---------------------------------------------------------------------------
 # Goose config override — inject system prompt
