@@ -126,7 +126,10 @@ DNS_PROVIDER_CONFIGS = {
 }
 
 def build_dns_provider_info(provider_id: str) -> DNSProviderInfo:
-    provider = DNS_PROVIDER_CONFIGS[provider_id]
+    provider = DNS_PROVIDER_CONFIGS.get(provider_id)
+    if provider is None:
+        valid_provider_ids = ", ".join(sorted(DNS_PROVIDER_CONFIGS))
+        raise ValueError(f"Unsupported DNS provider: {provider_id}. Valid providers: {valid_provider_ids}")
     configured_env_vars = [
         env_var for env_var in provider["required_env_vars"]
         if os.environ.get(env_var)
@@ -438,6 +441,13 @@ async def get_mindport_info():
     Mindport is the Windows-friendly wrapper around Vercel's Portless CLI that is
     exposed in the goose-mindport distro as both `mindport` and `portless`.
     """
+    proxy_port = os.environ.get("MINDPORT_PROXY_PORT") or os.environ.get("PORTLESS_PORT") or "1355"
+    default_tld = os.environ.get("MINDPORT_TLD") or os.environ.get("PORTLESS_TLD") or "localhost"
+    try:
+        default_proxy_port = int(proxy_port)
+    except ValueError:
+        default_proxy_port = 1355
+
     return MindportInfo(
         name="Mindport",
         upstream_project="vercel-labs/portless",
@@ -446,8 +456,8 @@ async def get_mindport_info():
         supports_windows=True,
         supports_macos=True,
         supports_linux=True,
-        default_proxy_port=int(os.environ.get("MINDPORT_PROXY_PORT", os.environ.get("PORTLESS_PORT", "1355"))),
-        default_tld=os.environ.get("MINDPORT_TLD", os.environ.get("PORTLESS_TLD", "localhost")),
+        default_proxy_port=default_proxy_port,
+        default_tld=default_tld,
         dns_providers_endpoint="/api/dns/providers"
     )
 

@@ -158,7 +158,6 @@ The following distros extend the base image with shallow runtime checkouts under
 - `goose-ryzenai` → `k-rks/RyzenAI-SW`
 - `goose-exllamav3` → `turboderp-org/exllamav3`
 - `goose-envminds` → `371-Minds/envminds`
-- `goose-mindport` → `vercel-labs/portless`
 
 Build example: `docker build -t goose-picollm -f distros/goose-picollm/Dockerfile .`
 

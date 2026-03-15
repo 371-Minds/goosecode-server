@@ -26,9 +26,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
 
 RUN npm install -g portless@latest && \
     mkdir -p /opt/integrations && \
-    git clone --depth 1 https://github.com/vercel-labs/portless.git /opt/integrations/mindport && \
-    printf '#!/bin/sh\nexec portless "$@"\n' > /usr/local/bin/mindport && \
-    chmod +x /usr/local/bin/mindport
+    git clone --depth 1 https://github.com/vercel-labs/portless.git /opt/integrations/mindport
+
+RUN cat <<'EOF' > /usr/local/bin/mindport
+#!/bin/sh
+exec portless "$@"
+EOF
+
+RUN chmod +x /usr/local/bin/mindport
 
 COPY --chown=coder:coder distros/goose-mindport/system-prompt.md /opt/goose/system-prompt.md
 
