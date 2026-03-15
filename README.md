@@ -24,7 +24,7 @@ A containerized VS Code server environment with integrated [Goose AI coding agen
 - **Secure Environment**: Password-protected VS Code Server instance
 - **Git Integration**: Git pre-installed and ready for repository operations
 - **Persistent Configuration**: Environment variables and configuration preserved between sessions (Unless workspace is deleted)
-- **Custom Distros**: Deployment- and runtime-specific `goose-*` images for Akash, Vercel, picoLLM, MII, MNN, RyzenAI, exllamav3, and envminds
+- **Custom Distros**: Deployment- and runtime-specific `goose-*` images for Akash, Vercel, Mindport, picoLLM, MII, MNN, RyzenAI, exllamav3, and envminds
 - **Biological Data Stack**: ClickHouse, Redis, ChromaDB, Ceramic — one `docker compose up` away
 - **Automaton Orchestration**: Integrates with [371-Minds/automaton](https://github.com/371-Minds/automaton) for automated CI/CD pipelines
 - **Universal Frontend Edge**: Build once for Web (Next.js + Vercel), iOS, and Android (Expo EAS)
@@ -135,6 +135,33 @@ Extra environment variables:
 | `EAS_PROJECT_ID` | Expo project ID |
 | `NEXT_APP_DIR` | Next.js app path in workspace (default: `web`) |
 | `EXPO_APP_DIR` | Expo app path in workspace (default: `mobile`) |
+
+### goose-mindport — Windows-friendly local routing with Mindport
+
+Packages the upstream [`vercel-labs/portless`](https://github.com/vercel-labs/portless) CLI for
+local routing and exposes it as both `portless` and `mindport`. The distro also keeps a shallow
+checkout at `/opt/integrations/mindport` so agents can inspect upstream behavior while they work.
+
+```bash
+docker build -t goose-mindport \
+  --build-arg BASE_IMAGE=goosecode-server:latest \
+  -f distros/goose-mindport/Dockerfile \
+  .
+```
+
+Extra environment variables:
+| Variable | Description |
+|----------|-------------|
+| `MINDPORT_TLD` | Preferred development TLD (default: `localhost`) |
+| `MINDPORT_PROXY_PORT` | Proxy port used by `mindport` / `portless` (default: `1355`) |
+| `MINDPORT_DNS_PROVIDER` | Preferred DNS provider identifier |
+| `OPENPROVIDER_USERNAME` / `OPENPROVIDER_PASSWORD` | Openprovider DNS credentials |
+| `PORKBUN_API_KEY` / `PORKBUN_SECRET_KEY` | Porkbun DNS credentials |
+| `NAMECHEAP_API_USER` / `NAMECHEAP_API_KEY` / `NAMECHEAP_USERNAME` / `NAMECHEAP_CLIENT_IP` | Namecheap DNS credentials |
+| `FREENAME_API_KEY` / `FREENAME_API_SECRET` | Freename DNS credentials |
+
+The Goose API exposes the packaged Mindport metadata at `/api/mindport` and lists supported DNS
+integrations at `/api/dns/providers` without returning any stored secrets.
 
 ### AI runtime distros
 
