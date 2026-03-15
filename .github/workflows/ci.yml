@@ -61,7 +61,7 @@ jobs:
       contents: read
     strategy:
       matrix:
-        distro: [goose-akash, goose-vercel, goose-picollm, goose-mii, goose-mnn, goose-ryzenai, goose-exllamav3, goose-envminds]
+        distro: [goose-akash, goose-vercel, goose-mindport, goose-picollm, goose-mii, goose-mnn, goose-ryzenai, goose-exllamav3, goose-envminds]
     steps:
       - uses: actions/checkout@v4
 
@@ -233,6 +233,18 @@ jobs:
           file: ./distros/goose-vercel/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/goose-vercel:latest
+          build-args: |
+            BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push goose-mindport distro
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./distros/goose-mindport/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/goose-mindport:latest
           build-args: |
             BASE_IMAGE=ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha

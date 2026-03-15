@@ -40,6 +40,7 @@
 |--------|--------|-------------|
 | Akash Network | `goose-akash` | Long-running batch jobs, DB hosting |
 | Vercel Edge | `goose-vercel` | Next.js SSR + Supergateway routing |
+| Mindport | `goose-mindport` | Windows-friendly Portless routing + DNS workflows |
 | io.net / Render | `goosecode-server` (default) | General engineering tasks |
 | Local dev | `docker-compose.yml` | Full stack with all services |
 
@@ -134,6 +135,17 @@ Adds on top of the base image:
 - System prompt focused on full-stack web + mobile
 
 Build: `docker build -t goose-vercel -f distros/goose-vercel/Dockerfile .`
+
+### goose-mindport
+`distros/goose-mindport/`
+
+Adds on top of the base image:
+- Node.js LTS
+- Global `portless` CLI exposed as `mindport`
+- Shallow checkout of `vercel-labs/portless` under `/opt/integrations/mindport`
+- System prompt focused on Windows-friendly local routing and DNS-provider workflows
+
+Build: `docker build -t goose-mindport -f distros/goose-mindport/Dockerfile .`
 
 ### AI runtime distros
 
@@ -284,6 +296,9 @@ goosecode-server/
 │   ├── goose-exllamav3/
 │   │   ├── Dockerfile          # exllamav3 integration image
 │   │   └── system-prompt.md    # exllamav3 workflow system prompt
+│   ├── goose-mindport/
+│   │   ├── Dockerfile          # Mindport / Portless integration image
+│   │   └── system-prompt.md    # Mindport workflow system prompt
 │   ├── goose-mii/
 │   │   ├── Dockerfile          # DeepSpeed-MII integration image
 │   │   └── system-prompt.md    # MII workflow system prompt

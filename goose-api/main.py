@@ -69,6 +69,81 @@ class SessionLog(BaseModel):
     session_id: str
     entries: List[LogEntry]
 
+class DNSProviderInfo(BaseModel):
+    """Metadata about an available DNS integration"""
+    id: str
+    name: str
+    configured: bool
+    required_env_vars: List[str]
+    configured_env_vars: List[str]
+    documentation_url: str
+    supported_features: List[str]
+    supports_windows: bool = True
+
+class MindportInfo(BaseModel):
+    """Metadata about the Mindport integration"""
+    name: str
+    upstream_project: str
+    command: str
+    command_alias: str
+    supports_windows: bool
+    supports_macos: bool
+    supports_linux: bool
+    default_proxy_port: int
+    default_tld: str
+    dns_providers_endpoint: str
+
+DNS_PROVIDER_CONFIGS = {
+    "openprovider": {
+        "name": "Openprovider",
+        "required_env_vars": ["OPENPROVIDER_USERNAME", "OPENPROVIDER_PASSWORD"],
+        "documentation_url": "https://www.openprovider.com/",
+        "supported_features": ["dns_records", "mindport_domain_management"]
+    },
+    "porkbun": {
+        "name": "Porkbun",
+        "required_env_vars": ["PORKBUN_API_KEY", "PORKBUN_SECRET_KEY"],
+        "documentation_url": "https://porkbun.com/",
+        "supported_features": ["dns_records", "mindport_domain_management"]
+    },
+    "namecheap": {
+        "name": "Namecheap",
+        "required_env_vars": [
+            "NAMECHEAP_API_USER",
+            "NAMECHEAP_API_KEY",
+            "NAMECHEAP_USERNAME",
+            "NAMECHEAP_CLIENT_IP"
+        ],
+        "documentation_url": "https://www.namecheap.com/",
+        "supported_features": ["dns_records", "mindport_domain_management"]
+    },
+    "freename": {
+        "name": "Freename",
+        "required_env_vars": ["FREENAME_API_KEY", "FREENAME_API_SECRET"],
+        "documentation_url": "https://www.freename.io/",
+        "supported_features": ["dns_records", "mindport_domain_management"]
+    }
+}
+
+def build_dns_provider_info(provider_id: str) -> DNSProviderInfo:
+    provider = DNS_PROVIDER_CONFIGS.get(provider_id)
+    if provider is None:
+        valid_provider_ids = ", ".join(sorted(DNS_PROVIDER_CONFIGS))
+        raise ValueError(f"Unsupported DNS provider: {provider_id}. Valid providers: {valid_provider_ids}")
+    configured_env_vars = [
+        env_var for env_var in provider["required_env_vars"]
+        if os.environ.get(env_var)
+    ]
+    return DNSProviderInfo(
+        id=provider_id,
+        name=provider["name"],
+        configured=len(configured_env_vars) == len(provider["required_env_vars"]),
+        required_env_vars=provider["required_env_vars"],
+        configured_env_vars=configured_env_vars,
+        documentation_url=provider["documentation_url"],
+        supported_features=provider["supported_features"]
+    )
+
 # --- SSE Endpoint ---
 
 class StreamRequest(BaseModel):
@@ -357,6 +432,45 @@ async def ping():
         "version": app.version,
         "services": services
     }
+
+@app.get("/api/mindport", response_model=MindportInfo, summary="Get Mindport integration metadata", dependencies=[Depends(verify_api_key)])
+async def get_mindport_info():
+    """
+    Return the packaged Mindport integration metadata.
+
+    Mindport is the Windows-friendly wrapper around Vercel's Portless CLI that is
+    exposed in the goose-mindport distro as both `mindport` and `portless`.
+    """
+    proxy_port = os.environ.get("MINDPORT_PROXY_PORT") or os.environ.get("PORTLESS_PORT") or "1355"
+    default_tld = os.environ.get("MINDPORT_TLD") or os.environ.get("PORTLESS_TLD") or "localhost"
+    try:
+        default_proxy_port = int(proxy_port)
+    except ValueError:
+        default_proxy_port = 1355
+
+    return MindportInfo(
+        name="Mindport",
+        upstream_project="vercel-labs/portless",
+        command="portless",
+        command_alias="mindport",
+        supports_windows=True,
+        supports_macos=True,
+        supports_linux=True,
+        default_proxy_port=default_proxy_port,
+        default_tld=default_tld,
+        dns_providers_endpoint="/api/dns/providers"
+    )
+
+@app.get("/api/dns/providers", response_model=List[DNSProviderInfo], summary="List configured DNS integrations for Mindport", dependencies=[Depends(verify_api_key)])
+async def list_dns_providers():
+    """
+    Return the DNS providers supported by the Mindport integration and whether
+    the current runtime has the required credentials configured for each one.
+    """
+    return [
+        build_dns_provider_info(provider_id)
+        for provider_id in DNS_PROVIDER_CONFIGS
+    ]
 
 # --- Terminal Endpoints ---
 
